@@ -1,0 +1,4 @@
+{
+  "name": "SynapticDistill.jl",
+  "install": "bash .cursor/install.sh"
+}
