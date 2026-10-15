@@ -11,7 +11,7 @@
 # Installs only what this repo's CI and manifests need:
 #   - apt: curl, ca-certificates
 #   - juliaup 1.12 [default]
-#   - Pkg.instantiate() (committed Manifest.toml)
+#   - Pkg.instantiate() for the root project and scripts/ (both committed manifests)
 #   - tool directories exposed to later shells (/etc/profile.d + /usr/local/bin links)
 #
 # It ends with a dependency fetch/prebuild, not a test run.
@@ -54,7 +54,10 @@ fi
 juliaup default "$JULIA_CHANNEL"
 
 # --- Julia dependencies ---
+# Root project matches CI. scripts/ is a separate environment (JSON3); root
+# instantiate does not install it, so `julia --project=scripts` cannot load JSON3.
 julia --project=. -e 'using Pkg; Pkg.instantiate()'
+julia --project=scripts -e 'using Pkg; Pkg.instantiate()'
 
 # --- Expose the tools to later shells ---
 # The PATH exports above last only for this script; Cursor starts the agent's shells
