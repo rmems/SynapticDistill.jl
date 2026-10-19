@@ -17,7 +17,7 @@ which is older than the 1.12.6 that the tracked `Manifest.toml` pins (`julia_ver
 | `julia --project=. -e 'using Pkg; Pkg.test()'` | verified (348 passed, about 70 s) |
 | `julia --project=. examples/pure_snn_training.jl`, `julia --project=. examples/hybrid_moe_training.jl` | verified (exit 0) |
 | `julia --project=scripts -e 'using Pkg; Pkg.instantiate()'` then `julia --project=scripts scripts/spikenaut_train.jl <state_telemetry.jsonl> <epochs> <out> [split]` | not run (needs a v3 `state_telemetry` JSONL; `Pkg.test()` exercises the script on `test/fixtures/` data) |
-| `julia --project=. benchmarks/eprop_tick_benchmark.jl` | not run (timing benchmark; it rewrites the gitignored `benchmarks/latest_results.txt`) |
+| `julia --project=. benchmarks/eprop_tick_benchmark.jl` | not run (it calls `create_network` and `eprop_update!`, which `src/` does not define, so it cannot run as written; it only prints and does not write `benchmarks/latest_results.txt`, which is tracked despite a `.gitignore` entry) |
 
 CI (`.github/workflows/ci.yml`) instantiates the project and runs `julia-runtest` on Julia 1.12.
 No formatter or linter config is in the repo, so there is no format gate to run.
