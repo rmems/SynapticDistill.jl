@@ -7,8 +7,8 @@ Claude-specific notes only. Project overview, scope boundaries, code style, test
 
 ## Commands
 
-Run from the repo root. "Verified" means it ran successfully in a fresh checkout on Julia 1.12.0 (Linux, CPU only).
-`Manifest.toml` is tracked and pins `julia_version = "1.12.6"`; CI runs Julia 1.12 only.
+Run from the repo root. "Verified" means it ran successfully in a fresh checkout on Julia 1.12.0 (Linux, CPU only),
+which is older than the 1.12.6 that the tracked `Manifest.toml` pins (`julia_version = "1.12.6"`); CI runs Julia 1.12 only.
 
 | Command | Status |
 |---|---|
