@@ -15,7 +15,10 @@ Thumbs.db
 *~
 .vscode/
 .idea/
-.cursor/
+.cursor/*
+# Cursor Cloud Agent environment: committed on purpose.
+!.cursor/environment.json
+!.cursor/install.sh
 .kilo/
 .codex/
 

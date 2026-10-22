@@ -81,3 +81,4 @@ julia --project=. -e 'using SynapticDistill; println("OK")'
   - `julia --project=. -e 'using Pkg; Pkg.test()'`
 
 - The first `instantiate`/`precompile` step is slow (~1–2 min) because of Zygote/NNlib. Later runs use the cache.
+- `.cursor/install.sh` also instantiates `scripts/` so `julia --project=scripts` can load `JSON3`. That environment is separate from the root project CI tests.
