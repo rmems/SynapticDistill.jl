@@ -108,8 +108,10 @@ For a complete, runnable example, see [`examples/hybrid_moe_training.jl`](exampl
 
 ## Available Rules
 
-- `:eprop`: Eligibility propagation. **Stub** — currently only logs the rule name; `train_step!` does not apply the eligibility-trace update.
-- `:ottt`: Online Spatio-Temporal Trace Training. **Stub** — currently only logs the rule name; `train_step!` does not apply the OTTT update.
+Implemented in [`src/rules/eprop.jl`](src/rules/eprop.jl) and [`src/rules/ottt.jl`](src/rules/ottt.jl). `train_step!` calls the matching `update_*!`, then applies the returned weight gradients via `apply_weight_update!`. Both rules target a **linear readout** on spike trains: a presynaptic eligibility filter `e_j[t] = λ e_j[t-1] + pre_j[t]`, a learning signal from your `loss_fn` (or ones if omitted), and a `n_out × n_pre` gradient. Surrogate gradients for spiking dynamics stay in your injected model step / Zygote path.
+
+- `:eprop`: Time-averaged eligibility — gradient `L ⊗ mean_t(y[t])` (outer product of the learning signal with the mean presynaptic trace).
+- `:ottt`: Online Spatio-Temporal Trace Training — accumulates `(1/T) ∑_t L[t] ⊗ y[t]`. With episode-level `L`, this matches e-prop; per-timestep `L[t]` requires `output.logits` as an `n_out × T` matrix from the model step (see `ottt.jl` docstring).
 
 ## Custom Model Steps and Loss Functions
 
@@ -165,7 +167,7 @@ julia --project=scripts scripts/spikenaut_train.jl \
   5 /tmp/spikenaut-out train 123
 ```
 
-Library `update_eprop!` / `update_ottt!` stay stubs; do not add this package to the Rust `Cargo.toml`.
+The library rules (`update_eprop!` / `update_ottt!`) are linear-readout implementations in `src/rules/` and are **not** used by this sidecar script; do not add this package to the Rust `Cargo.toml`.
 
 **`merged_v2` replacement source (capability, not done).** This script can write the five-file FPGA layout below to a local `out_dir`. A later health-PASS retrain *could* replace `rmems/Spikenaut-SNN` `dataset/merged_v2/` from those files. **None of that has happened from this path:** the sidecar does not write the Spikenaut-SNN tree, does not publish Hugging Face, does not load silicon, and does not overwrite `merged_v2`. Spikenaut-SNN#13 stays open. Promotion would be a separate Spikenaut-SNN PR after k=none test bars (exp-009 / exp-023). Do not treat the published ramp as this script's output.
 

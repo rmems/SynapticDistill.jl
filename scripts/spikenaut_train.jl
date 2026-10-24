@@ -8,7 +8,7 @@
 # Q8.8 .mem files.
 #
 # Standalone: JSON3 + stdlib only. Does **not** `using SynapticDistill`
-# (library `update_eprop!` / `update_ottt!` are still stubs).
+# (library `update_eprop!` / `update_ottt!` live in `src/rules/`; this script does not call them).
 #
 # Legal live columns (Spikenaut Scientist exp-008; survive train/val/test,
 # not constant, not all-null, not identity). Axons 0..4 (Julia 1..5):

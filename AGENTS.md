@@ -4,7 +4,7 @@
 
 ## Project overview
 
-- **Language:** Julia (1.8+)
+- **Language:** Julia (1.12+; `[compat]` matches CI and the committed `Manifest.toml`)
 - **Package name:** SynapticDistill
 - **Repository:** https://github.com/rmems/SynapticDistill.jl (transferred from Limen-Neural; old org URL redirects here)
 - **Wiki:** enabled under rmems — https://github.com/rmems/SynapticDistill.jl/wiki (remote `rmems/SynapticDistill.jl.wiki.git`)

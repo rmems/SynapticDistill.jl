@@ -104,7 +104,7 @@ end
             train_step!(model, spikes, loss_fn, mock_step; rule=:ottt)
         end
         @test calls[] == 1
-        # Same mock forward+loss; rule only prints a stub message, so loss matches.
+        # Same mock forward+loss; :ottt uses the same eligibility path on vector logits, so loss matches.
         @test positional_state.loss ≈ expected_loss
 
         @test_throws ArgumentError train_step!(model, spikes, loss_fn; rule=:eprop)
