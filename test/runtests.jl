@@ -51,6 +51,8 @@ end
         @test !occursin("**Stub**", readme)
         @test occursin("`trace_lambda`", readme)
         @test occursin(":surrogate", readme)
+        @test occursin("ignores its return value", readme)
+        @test occursin("not the weight delta", readme)
     end
 
     @testset "surrogate gradients" begin
