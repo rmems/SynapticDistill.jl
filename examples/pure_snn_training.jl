@@ -36,5 +36,5 @@ model, state = train_step!(model, spike_batch, mse_loss; forward_fn=model_step, 
 
 println("Training step complete.")
 println("Loss: ", state.loss)
-# In a real scenario, you would inspect the gradients and update the model.
+# `train_step!` already wrote `model.weights`. `state.gradients` is that update.
 # println("Gradients: ", state.gradients)

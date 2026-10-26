@@ -73,7 +73,7 @@ to `model.weights`.
 
 Keyword arguments:
 - `forward_fn` / positional `model_step`: `(model, spikes) -> output`
-- `rule`: `:eprop` or `:ottt`
+- `rule`: `:eprop`, `:ottt`, or `:surrogate` (Zygote through the model step)
 - `optimizer`: `(params, grads) -> ...` (default SGD, `lr=0.001`)
 - `traces`: optional [`TraceBatch`](@ref) carried from the previous step
 - `trace_lambda`: eligibility / OTTT leak (default `0.95`)
