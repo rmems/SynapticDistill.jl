@@ -53,6 +53,7 @@ end
         @test occursin(":surrogate", readme)
         @test occursin("ignores its return value", readme)
         @test occursin("not the weight delta", readme)
+        @test occursin("extracted weight gradient", readme)
     end
 
     @testset "surrogate gradients" begin

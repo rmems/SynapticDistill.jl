@@ -78,8 +78,12 @@ Keyword arguments:
 - `traces`: optional [`TraceBatch`](@ref) carried from the previous step
 - `trace_lambda`: eligibility / OTTT leak (default `0.95`)
 
-Returns `(model, TrainingState)`. `state.gradients` is the gradient passed
-to the optimizer, not the weight delta. `state.traces` carries the filter.
+Returns `(model, TrainingState)`. `state.gradients` is the rule-specific
+gradient, not the weight delta: a matrix for `:eprop` and `:ottt`, or a
+Zygote `NamedTuple` for `:surrogate`. The optimizer receives a separate
+extracted weight gradient (that matrix, or the `NamedTuple`'s `weights`
+field, converted to `Float32` and reshaped to `size(model.weights)`).
+`state.traces` carries the filter.
 """
 function train_step!(model, spikes::SpikeBatch, loss_fn;
                      forward_fn = nothing,

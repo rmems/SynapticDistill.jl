@@ -4,7 +4,7 @@
 
 ### Changed
 
-- README, examples, and the `train_step!` docstring: `:eprop` and `:ottt` are applied in place to `model.weights`. A custom `optimizer(W, G)` must mutate `W` in place; its return value is ignored. `state.gradients` is the gradient passed to the optimizer, not the weight delta. Document `:surrogate`, `trace_lambda`, and trace carry. The sidecar still does not call the library.
+- README, examples, and the `train_step!` docstring: `:eprop` and `:ottt` are applied in place to `model.weights`. A custom `optimizer(W, G)` must mutate `W` in place; its return value is ignored. `state.gradients` is the rule-specific gradient (matrix, or a Zygote `NamedTuple` for `:surrogate`), not the weight delta. The optimizer receives the extracted weight gradient (`Float32`, reshaped to the weight matrix). Document `:surrogate`, `trace_lambda`, and trace carry. The sidecar still does not call the library.
 
 - `scripts/spikenaut_train.jl`: `ei_ratio` / assert / README now say Dale **12:4** (75:25, `N_INHIB=4`), not informal “80:20”. `assert_signed_export` requires each I readout column to have a strictly negative Q8.8 word (all-zero I fails). Write paths and line counts come from `MERGED_V2_FILES` / `N_NEURONS` / `N_CHANNELS` / `N_OUTPUTS`. Missing JSON keys use `get(...) == value` so the contract error fires instead of `MethodError`. Fail-loud after write is kept (dirty `out_dir` on failure).
 
