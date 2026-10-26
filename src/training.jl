@@ -73,13 +73,17 @@ to `model.weights`.
 
 Keyword arguments:
 - `forward_fn` / positional `model_step`: `(model, spikes) -> output`
-- `rule`: `:eprop` or `:ottt`
-- `optimizer`: `(params, grads) -> ...` (default SGD, `lr=0.001`)
+- `rule`: `:eprop`, `:ottt`, or `:surrogate` (Zygote through the model step)
+- `optimizer`: `(W, G) -> ...` must mutate `W` in place (default SGD, `lr=0.001`). The return value is ignored, so a function that returns new parameters is not applied.
 - `traces`: optional [`TraceBatch`](@ref) carried from the previous step
 - `trace_lambda`: eligibility / OTTT leak (default `0.95`)
 
-Returns `(updated_model, TrainingState)` with `state.gradients` and
-`state.traces` set.
+Returns `(model, TrainingState)`. `state.gradients` is the rule-specific
+gradient, not the weight delta: a matrix for `:eprop` and `:ottt`, or a
+Zygote `NamedTuple` for `:surrogate`. The optimizer receives a separate
+extracted weight gradient (that matrix, or the `NamedTuple`'s `weights`
+field, converted to `Float32` and reshaped to `size(model.weights)`).
+`state.traces` carries the filter.
 """
 function train_step!(model, spikes::SpikeBatch, loss_fn;
                      forward_fn = nothing,

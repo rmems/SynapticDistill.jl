@@ -108,8 +108,13 @@ For a complete, runnable example, see [`examples/hybrid_moe_training.jl`](exampl
 
 ## Available Rules
 
-- `:eprop`: Eligibility propagation. **Stub** — currently only logs the rule name; `train_step!` does not apply the eligibility-trace update.
-- `:ottt`: Online Spatio-Temporal Trace Training. **Stub** — currently only logs the rule name; `train_step!` does not apply the OTTT update.
+`train_step!` applies the chosen rule to `model.weights` in place (default SGD, learning rate `0.001`). A custom `optimizer(W, G)` must mutate `W` (`model.weights`) in place. `train_step!` ignores its return value, so a function that returns new parameters is not applied. Carry `state.traces` into the next call as `traces`. `trace_lambda` defaults to `0.95` and must be finite and in `[0, 1)`. `state.gradients` is the rule-specific gradient, not the weight delta and not the object passed to `optimizer`: an `n_out × n_pre` matrix for `:eprop` and `:ottt`, or a Zygote `NamedTuple` for `:surrogate`. The optimizer receives the extracted weight gradient: that matrix, or the `NamedTuple`'s `weights` field, converted to `Float32` and reshaped to `size(model.weights)`.
+
+- `:eprop`: Eligibility propagation for a linear readout. The presynaptic trace is `y[t] = λ y[t-1] + pre[t]`. The weight gradient is `∂L/∂logits` outer-producted with the time-averaged trace, scaled by `(1-λ)`. This is not a full recurrent eligibility vector: there is no per-synapse trace and no surrogate factor inside the rule.
+- `:ottt`: Online Spatio-Temporal Trace Training on the same presynaptic trace. When `output.logits` is an `n_out × T` matrix, each timestep’s `∂L/∂logits` is paired with that timestep’s trace. A vector `logits` has no per-timestep signal, so the update matches `:eprop` and `state.traces` records `time_resolved = false`.
+- `:surrogate`: Zygote gradient through the injected model step. `state.gradients` is that Zygote gradient (a `NamedTuple` with `weights` for a struct model), not the `n_out × n_pre` matrix returned by `:eprop` and `:ottt`.
+
+`update_eprop!` and `update_ottt!` are exported. They return `(gradients, traces)` and do not run the optimizer. `train_step!` is what writes `model.weights`.
 
 ## Custom Model Steps and Loss Functions
 
@@ -165,7 +170,7 @@ julia --project=scripts scripts/spikenaut_train.jl \
   5 /tmp/spikenaut-out train 123
 ```
 
-Library `update_eprop!` / `update_ottt!` stay stubs; do not add this package to the Rust `Cargo.toml`.
+The sidecar does not `using SynapticDistill`. Do not add this package to the Rust `Cargo.toml`.
 
 **`merged_v2` replacement source (capability, not done).** This script can write the five-file FPGA layout below to a local `out_dir`. A later health-PASS retrain *could* replace `rmems/Spikenaut-SNN` `dataset/merged_v2/` from those files. **None of that has happened from this path:** the sidecar does not write the Spikenaut-SNN tree, does not publish Hugging Face, does not load silicon, and does not overwrite `merged_v2`. Spikenaut-SNN#13 stays open. Promotion would be a separate Spikenaut-SNN PR after k=none test bars (exp-009 / exp-023). Do not treat the published ramp as this script's output.
 

@@ -7,8 +7,8 @@
 # reward-modulated STDP / e-prop, then writes snn_model.json + signed
 # Q8.8 .mem files.
 #
-# Standalone: JSON3 + stdlib only. Does **not** `using SynapticDistill`
-# (library `update_eprop!` / `update_ottt!` are still stubs).
+# Standalone: JSON3 + stdlib only. Does **not** `using SynapticDistill`.
+# Library `update_eprop!` / `update_ottt!` are a separate API; this script does not call them.
 #
 # Legal live columns (Spikenaut Scientist exp-008; survive train/val/test,
 # not constant, not all-null, not identity). Axons 0..4 (Julia 1..5):
