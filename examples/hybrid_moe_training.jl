@@ -42,5 +42,5 @@ model, state = train_step!(model, spike_batch, loss_fn; forward_fn=model_step, r
 println("Training step complete.")
 println("Loss: ", state.loss)
 
-# In a real hybrid setup, caller code would decide how to consume `state.gradients`.
+# `train_step!` already wrote the student `model.weights`. The teacher stays outside this package.
 # println("Gradients: ", state.gradients)

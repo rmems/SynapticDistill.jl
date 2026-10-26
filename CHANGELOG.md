@@ -6,6 +6,8 @@
 
 - README: `update_eprop!` / `update_ottt!` are documented as implemented linear-readout rules in `src/rules/` (not stubs); sidecar section notes the script does not call them. `[compat] julia` raised to `1.12` to match CI and `Manifest.toml`.
 
+- README, examples, and the `train_step!` docstring: `:eprop` and `:ottt` are applied in place to `model.weights`. A custom `optimizer(W, G)` must mutate `W` in place; its return value is ignored. `state.gradients` is the rule-specific gradient (matrix, or a Zygote `NamedTuple` for `:surrogate`), not the weight delta. The optimizer receives the extracted weight gradient (`Float32`, reshaped to the weight matrix). Document `:surrogate`, `trace_lambda`, and trace carry. The sidecar still does not call the library.
+
 - `scripts/spikenaut_train.jl`: `ei_ratio` / assert / README now say Dale **12:4** (75:25, `N_INHIB=4`), not informal “80:20”. `assert_signed_export` requires each I readout column to have a strictly negative Q8.8 word (all-zero I fails). Write paths and line counts come from `MERGED_V2_FILES` / `N_NEURONS` / `N_CHANNELS` / `N_OUTPUTS`. Missing JSON keys use `get(...) == value` so the contract error fires instead of `MethodError`. Fail-loud after write is kept (dirty `out_dir` on failure).
 
 - README: sidecar signed Q8.8 / Dale / K-WTA is a **capability** of `scripts/spikenaut_train.jl` when run on legal v3 JSONL — not a claim that `dataset/merged_v2/` was replaced, that Hamming / Spikenaut-SNN#4 or #13 closed, or that HF / silicon happened.

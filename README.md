@@ -108,10 +108,13 @@ For a complete, runnable example, see [`examples/hybrid_moe_training.jl`](exampl
 
 ## Available Rules
 
-Implemented in [`src/rules/eprop.jl`](src/rules/eprop.jl) and [`src/rules/ottt.jl`](src/rules/ottt.jl). `train_step!` calls the matching `update_*!`, then applies the returned weight gradients via `apply_weight_update!`. Both rules target a **linear readout** on spike trains: a presynaptic eligibility filter `e_j[t] = λ e_j[t-1] + pre_j[t]`, a learning signal from your `loss_fn` (or ones if omitted), and a `n_out × n_pre` gradient. Surrogate gradients for spiking dynamics stay in your injected model step / Zygote path.
+Implemented in [`src/rules/eprop.jl`](src/rules/eprop.jl) and [`src/rules/ottt.jl`](src/rules/ottt.jl). `train_step!` applies the chosen rule to `model.weights` in place (default SGD, learning rate `0.001`). A custom `optimizer(W, G)` must mutate `W` (`model.weights`) in place. `train_step!` ignores its return value, so a function that returns new parameters is not applied. Carry `state.traces` into the next call as `traces`. `trace_lambda` defaults to `0.95` and must be finite and in `[0, 1)`. `state.gradients` is the rule-specific gradient, not the weight delta and not the object passed to `optimizer`: an `n_out × n_pre` matrix for `:eprop` and `:ottt`, or a Zygote `NamedTuple` for `:surrogate`. The optimizer receives the extracted weight gradient: that matrix, or the `NamedTuple`'s `weights` field, converted to `Float32` and reshaped to `size(model.weights)`.
 
-- `:eprop`: Time-averaged eligibility — gradient `L ⊗ mean_t(y[t])` (outer product of the learning signal with the mean presynaptic trace).
-- `:ottt`: Online Spatio-Temporal Trace Training — accumulates `(1/T) ∑_t L[t] ⊗ y[t]`. With episode-level `L`, this matches e-prop; per-timestep `L[t]` requires `output.logits` as an `n_out × T` matrix from the model step (see `ottt.jl` docstring).
+- `:eprop`: Eligibility propagation for a linear readout. The presynaptic trace is `y[t] = λ y[t-1] + pre[t]`. The weight gradient is `∂L/∂logits` outer-producted with the time-averaged trace, scaled by `(1-λ)`. This is not a full recurrent eligibility vector: there is no per-synapse trace and no surrogate factor inside the rule.
+- `:ottt`: Online Spatio-Temporal Trace Training on the same presynaptic trace. When `output.logits` is an `n_out × T` matrix, each timestep’s `∂L/∂logits` is paired with that timestep’s trace. A vector `logits` has no per-timestep signal, so the update matches `:eprop` and `state.traces` records `time_resolved = false`.
+- `:surrogate`: Zygote gradient through the injected model step. `state.gradients` is that Zygote gradient (a `NamedTuple` with `weights` for a struct model), not the `n_out × n_pre` matrix returned by `:eprop` and `:ottt`.
+
+`update_eprop!` and `update_ottt!` are exported. They return `(gradients, traces)` and do not run the optimizer. `train_step!` is what writes `model.weights`.
 
 ## Custom Model Steps and Loss Functions
 
@@ -167,7 +170,7 @@ julia --project=scripts scripts/spikenaut_train.jl \
   5 /tmp/spikenaut-out train 123
 ```
 
-The library rules (`update_eprop!` / `update_ottt!`) are linear-readout implementations in `src/rules/` and are **not** used by this sidecar script; do not add this package to the Rust `Cargo.toml`.
+The library rules (`update_eprop!` / `update_ottt!`) in `src/rules/` are not used by this sidecar script; do not add this package to the Rust `Cargo.toml`.
 
 **`merged_v2` replacement source (capability, not done).** This script can write the five-file FPGA layout below to a local `out_dir`. A later health-PASS retrain *could* replace `rmems/Spikenaut-SNN` `dataset/merged_v2/` from those files. **None of that has happened from this path:** the sidecar does not write the Spikenaut-SNN tree, does not publish Hugging Face, does not load silicon, and does not overwrite `merged_v2`. Spikenaut-SNN#13 stays open. Promotion would be a separate Spikenaut-SNN PR after k=none test bars (exp-009 / exp-023). Do not treat the published ramp as this script's output.
 

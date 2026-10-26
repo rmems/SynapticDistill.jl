@@ -48,6 +48,12 @@ end
         @test occursin("`rmems/plasticity-lab` does not exist", readme)
         @test !occursin("https://github.com/rmems/plasticity-lab", readme)
         @test occursin("rmems/SynapticDistill.jl/wiki", readme)
+        @test !occursin("**Stub**", readme)
+        @test occursin("`trace_lambda`", readme)
+        @test occursin(":surrogate", readme)
+        @test occursin("ignores its return value", readme)
+        @test occursin("not the weight delta", readme)
+        @test occursin("extracted weight gradient", readme)
     end
 
     @testset "surrogate gradients" begin
@@ -104,7 +110,7 @@ end
             train_step!(model, spikes, loss_fn, mock_step; rule=:ottt)
         end
         @test calls[] == 1
-        # Same mock forward+loss; :ottt uses the same eligibility path on vector logits, so loss matches.
+        # Same mock forward+loss, so the scalar loss matches. The rule still updates weights.
         @test positional_state.loss ≈ expected_loss
 
         @test_throws ArgumentError train_step!(model, spikes, loss_fn; rule=:eprop)
