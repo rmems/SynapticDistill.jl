@@ -10,9 +10,9 @@ reviews:
     drafts: false
   path_instructions:
   - path: '{src,test,benchmarks,examples}/**/*.jl'
-    instructions: 'Julia package code. `[compat] julia = "1.8"`; CI runs Julia 1.12. Do not use Base/stdlib APIs newer than the compat floor without raising it. Review for type stability in hot paths (concrete struct field types, no abstractly typed containers, no non-`const` globals, no `Any`-returning branches), avoidable allocations in inner loops, and changes to exported API. Don''t suggest testing on Julia 1.11: the pinned PrecompileTools uses 1.12-only `Base.StaticData` (AGENTS.md).'
+    instructions: 'Julia package code. `[compat] julia = "1.12"`; CI runs Julia 1.12. Review for type stability in hot paths (concrete struct field types, no abstractly typed containers, no non-`const` globals, no `Any`-returning branches), avoidable allocations in inner loops, and changes to exported API. Don''t suggest testing on Julia 1.11: the pinned PrecompileTools uses 1.12-only `Base.StaticData` (AGENTS.md).'
   - path: '**/Project.toml'
-    instructions: Julia Project.toml. New `[deps]` entries should get a `[compat]` bound; flag widened or dropped bounds and any UUID change (UUIDs are immutable once registered). The compat floor (1.8) is lower than what the committed Manifest actually supports (1.12); flag code that widens that gap.
+    instructions: Julia Project.toml. New `[deps]` entries should get a `[compat]` bound; flag widened or dropped bounds and any UUID change (UUIDs are immutable once registered). `[compat] julia` should stay aligned with CI and the committed Manifest.
   - path: '**/Manifest.toml'
     instructions: Resolver output committed on purpose. Do not review it line by line; only flag a changed `julia_version`, churn that is not explained by a Project.toml change, or resolved versions that violate `[compat]`.
   - path: .github/workflows/**
