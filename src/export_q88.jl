@@ -50,8 +50,8 @@ function read_q88_mem(path::AbstractString)
     out = Float32[]
     for (i, line) in enumerate(eachline(path))
         tok = strip(line)
-        isempty(tok) && continue
-        length(tok) == 4 || error("$path:$i: Q8.8 word must be 4 hex digits, got $(repr(tok))")
+        isempty(tok) && error("$path:$i: empty line in Q8.8 .mem file")
+        length(tok) == 4 && all(c -> c in "0123456789ABCDEFabcdef", tok) || error("$path:$i: Q8.8 word must be 4 hex digits, got $(repr(tok))")
         push!(out, q88_to_float(reinterpret(Int16, parse(UInt16, tok, base = 16))))
     end
     return out
@@ -75,7 +75,9 @@ row-major `neuron x input`), `parameters_decay.mem`, and, when given,
 `parameters_output_weights.mem`.
 
 `weights` is an `N x n_inputs` matrix; `thresholds` and `decay` have length `N`.
-`output_weights` (optional) is an `N x K` matrix, flattened row-major.
+`output_weights` (optional) is an `N x K` matrix, written class-major `K x N`
+(`addr = class * N + neuron`), as silicon-bridge's generic readout file expects.
+An existing `parameters_output_weights.mem` is removed when it is omitted.
 `Inf` saturates; `NaN` becomes `0`. Returns the written paths.
 """
 function export_q88_mem(dir::AbstractString;
@@ -99,8 +101,11 @@ function export_q88_mem(dir::AbstractString;
         _write_q88_mem(joinpath(dir, "parameters_weights.mem"), rowmajor(weights)),
         _write_q88_mem(joinpath(dir, "parameters_decay.mem"), decay),
     ]
-    output_weights === nothing ||
-        push!(paths, _write_q88_mem(joinpath(dir, "parameters_output_weights.mem"),
-                                    rowmajor(output_weights)))
+    out_path = joinpath(dir, "parameters_output_weights.mem")
+    if output_weights === nothing
+        rm(out_path; force = true)  # no stale readout beside fresh files
+    else
+        push!(paths, _write_q88_mem(out_path, rowmajor(permutedims(output_weights))))
+    end
     return paths
 end

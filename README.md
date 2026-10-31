@@ -128,10 +128,10 @@ export_q88_mem("out/"; thresholds = th, weights = W, decay = dec)  # W is N × n
 
 Files: `parameters.mem` (thresholds), `parameters_weights.mem` (row-major
 `neuron × input`), `parameters_decay.mem`, and optionally
-`parameters_output_weights.mem` (pass `output_weights = R`, `N × K`).
+`parameters_output_weights.mem` (pass `output_weights = R`, `N × K`; written class-major `K × N`, `addr = class * N + neuron`; a stale file is removed when omitted).
 
 Format (matches silicon-bridge `encode_q88_signed_full` / `write_mem_file`): 16-bit
-signed two's-complement word = `value × 256`, **truncated toward zero**, saturating at
+signed two's-complement word = `Float32(value) × 256`, **truncated toward zero**, saturating at
 `8000`/`7FFF` (`-128.0` … `127.99609375`), `NaN` → `0000`; one uppercase 4-digit hex
 word per line (`FF00` = -1.0). `to_q88`, `q88_hex`, `q88_to_float`, and `read_q88_mem`
 expose the codec. Parity is tested against a real silicon-bridge output in
