@@ -116,6 +116,27 @@ Implemented in [`src/rules/eprop.jl`](src/rules/eprop.jl) and [`src/rules/ottt.j
 
 `update_eprop!` and `update_ottt!` are exported. They return `(gradients, traces)` and do not run the optimizer. `train_step!` is what writes `model.weights`.
 
+## FPGA export (Q8.8 `.mem`)
+
+`export_q88_mem` writes distilled parameters as Q8.8 `.mem` files that
+[`rmems/silicon-bridge`](https://github.com/rmems/silicon-bridge) loads byte-for-byte:
+
+```julia
+using SynapticDistill
+export_q88_mem("out/"; thresholds = th, weights = W, decay = dec)  # W is N × n_inputs
+```
+
+Files: `parameters.mem` (thresholds), `parameters_weights.mem` (row-major
+`neuron × input`), `parameters_decay.mem`, and optionally
+`parameters_output_weights.mem` (pass `output_weights = R`, `N × K`; written class-major `K × N`, `addr = class * N + neuron`; a stale file is removed when omitted).
+
+Format (matches silicon-bridge `encode_q88_signed_full` / `write_mem_file`): 16-bit
+signed two's-complement word = `Float32(value) × 256`, **truncated toward zero**, saturating at
+`8000`/`7FFF` (`-128.0` … `127.99609375`), `NaN` → `0000`; one uppercase 4-digit hex
+word per line (`FF00` = -1.0). `to_q88`, `q88_hex`, `q88_to_float`, and `read_q88_mem`
+expose the codec. Parity is tested against a real silicon-bridge output in
+`test/fixtures/silicon_bridge_4x6/`. `parameters.json` metadata is not written.
+
 ## Custom Model Steps and Loss Functions
 
 A `ModelStep` is any callable object with signature `(model, spikes::SpikeBatch) -> output`. The output can be any Julia value accepted by your loss function, such as a named tuple containing logits, spike counts, membrane potentials, or task-specific metrics.

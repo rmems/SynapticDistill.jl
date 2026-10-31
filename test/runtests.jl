@@ -22,6 +22,66 @@ end
 
 @testset "SynapticDistill" begin
 
+    @testset "Q8.8 .mem export (silicon-bridge parity)" begin
+        fx = joinpath(@__DIR__, "fixtures", "silicon_bridge_4x6")
+        # Same inputs as silicon-bridge `examples/generic_mem_export.rs`.
+        W = Float32[0.5 -1 0.25 1 -0.5 0
+                    -128 127.99609375 1/256 -1/256 2 -2
+                    1 1 1 1 1 1
+                    -0.5 0.5 -0.5 0.5 -0.5 0.5]
+        th = Float32[1.0, 0.5, 1.5, 0.75]
+        dec = Float32[0.5, 0.75, 0.25, 1.0]
+
+        @testset "scalar encoder" begin
+            @test q88_hex(0.85) == "00D9"          # truncates; round() would give 00DA
+            @test q88_hex(-1) == "FF00"
+            @test q88_hex(-128) == "8000"
+            @test q88_hex(1000) == "7FFF"
+            @test q88_hex(-1000) == "8000"
+            @test q88_hex(Inf) == "7FFF"
+            @test q88_hex(NaN) == "0000"
+            @test q88_hex(-1/512) == "0000"        # toward zero
+            @test q88_to_float(Int16(-256)) == -1f0
+        end
+
+        @testset "byte-for-byte vs silicon-bridge fixture" begin
+            mktempdir() do dir
+                paths = export_q88_mem(dir; thresholds = th, weights = W, decay = dec)
+                @test length(paths) == 3
+                for f in ("parameters.mem", "parameters_weights.mem", "parameters_decay.mem")
+                    @test read(joinpath(dir, f)) == read(joinpath(fx, f))
+                end
+                # Round trip within 1 LSB.
+                back = read_q88_mem(joinpath(dir, "parameters_weights.mem"))
+                @test all(abs.(back .- vec(permutedims(W))) .<= 1/256)
+                @test read_q88_mem(joinpath(fx, "parameters.mem")) == th
+            end
+        end
+
+        @testset "output weights and validation" begin
+            mktempdir() do dir
+                R = Float32[0.5 -0.5; 1 -1; 0 0; 2 -2]
+                paths = export_q88_mem(dir; thresholds = th, weights = W, decay = dec,
+                                       output_weights = R)
+                @test length(paths) == 4
+                # class-major K x N: all of class 1, then class 2
+                @test read(joinpath(dir, "parameters_output_weights.mem"), String) ==
+                      "0080\n0100\n0000\n0200\nFF80\nFF00\n0000\nFE00\n"
+                # omitting output_weights removes the stale file
+                export_q88_mem(dir; thresholds = th, weights = W, decay = dec)
+                @test !isfile(joinpath(dir, "parameters_output_weights.mem"))
+                # malformed files error with path:line instead of shifting addresses
+                bad = joinpath(dir, "bad.mem")
+                write(bad, "0100\n\n0200\n")
+                @test_throws ErrorException read_q88_mem(bad)
+                write(bad, "0100\n00GG\n")
+                @test_throws ErrorException read_q88_mem(bad)
+                @test_throws DimensionMismatch export_q88_mem(dir; thresholds = th[1:3],
+                                                              weights = W, decay = dec)
+            end
+        end
+    end
+
     @testset "Package loads" begin
         @test @isdefined(SynapticDistill)
         @test SynapticDistill isa Module

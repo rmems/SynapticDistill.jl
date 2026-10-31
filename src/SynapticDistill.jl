@@ -27,6 +27,10 @@ include("rules/ottt.jl")
 export surrogate_heaviside, surrogate_sigmoid, surrogate_exponential
 export update_eprop!, update_ottt!
 
+# Q8.8 FPGA `.mem` export (silicon-bridge compatible)
+include("export_q88.jl")
+export to_q88, q88_to_float, q88_hex, read_q88_mem, export_q88_mem
+
 # Main training loop
 include("training.jl")
 export ModelStep, train_step!
