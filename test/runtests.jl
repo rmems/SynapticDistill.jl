@@ -64,7 +64,18 @@ end
                 paths = export_q88_mem(dir; thresholds = th, weights = W, decay = dec,
                                        output_weights = R)
                 @test length(paths) == 4
-                @test countlines(joinpath(dir, "parameters_output_weights.mem")) == 8
+                # class-major K x N: all of class 1, then class 2
+                @test read(joinpath(dir, "parameters_output_weights.mem"), String) ==
+                      "0080\n0100\n0000\n0200\nFF80\nFF00\n0000\nFE00\n"
+                # omitting output_weights removes the stale file
+                export_q88_mem(dir; thresholds = th, weights = W, decay = dec)
+                @test !isfile(joinpath(dir, "parameters_output_weights.mem"))
+                # malformed files error with path:line instead of shifting addresses
+                bad = joinpath(dir, "bad.mem")
+                write(bad, "0100\n\n0200\n")
+                @test_throws ErrorException read_q88_mem(bad)
+                write(bad, "0100\n00GG\n")
+                @test_throws ErrorException read_q88_mem(bad)
                 @test_throws DimensionMismatch export_q88_mem(dir; thresholds = th[1:3],
                                                               weights = W, decay = dec)
             end
